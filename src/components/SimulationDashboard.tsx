@@ -1,6 +1,7 @@
 import type { SimulationResults } from "@/lib/simulation";
 import { Beaker, Flame, Droplets, Package } from "lucide-react";
 import SectionReveal from "@/components/SectionReveal";
+import RiskSensitivityAnalysis from "@/components/RiskSensitivityAnalysis";
 
 interface Props {
   results: SimulationResults;
@@ -55,6 +56,11 @@ const SimulationDashboard = ({ results }: Props) => {
               <div className="mt-2 text-2xl font-semibold text-primary">{results.carbonSaved.toLocaleString()} tCO₂/yr</div>
             </div>
           </div>
+        </SectionReveal>
+
+        {/* NEW: Risk & Sensitivity Analysis Section */}
+        <SectionReveal delayMs={260} className="mx-auto mt-12 max-w-6xl">
+          <RiskSensitivityAnalysis results={results} />
         </SectionReveal>
       </div>
     </section>

@@ -1,7 +1,9 @@
-import { useMemo } from "react";
-import { Factory, Droplets, Zap as ZapIcon, Users, Building2, TrendingUp, SlidersHorizontal, Sparkles, ArrowRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Factory, Droplets, Zap as ZapIcon, Users, Building2, TrendingUp, SlidersHorizontal, Sparkles, ArrowRight, Map } from "lucide-react";
 import SectionReveal from "@/components/SectionReveal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { runSimulation, type SimulationResults } from "@/lib/simulation";
+import { getRegionalData, indianRegionalData } from "@/lib/regional-data";
 
 export interface SimulationInputs {
   bagasseTons: number;
@@ -10,6 +12,8 @@ export interface SimulationInputs {
   laborCost: number;
   plantCapex: number;
   grapheneMarketPrice: number;
+  selectedRegion?: string; // NEW
+  carbonCreditValue?: number; // NEW
 }
 
 interface InputModuleProps {
@@ -35,6 +39,8 @@ export const defaultSimulationInputs: SimulationInputs = {
   laborCost: 500,
   plantCapex: 2,
   grapheneMarketPrice: 150,
+  selectedRegion: "tamil-nadu", // NEW: Default to TN (lowest cost)
+  carbonCreditValue: 2.4, // NEW: Default carbon credit value
 };
 
 export const simulationPresets: Array<{ id: string; label: string; description: string; values: SimulationInputs }> = [
@@ -99,6 +105,24 @@ const formatCompactCurrency = (value: number) => {
 };
 
 const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: InputModuleProps) => {
+  const [showRegionDetails, setShowRegionDetails] = useState(false);
+
+  // Get current region data
+  const currentRegion = inputs.selectedRegion ? getRegionalData(inputs.selectedRegion) : getRegionalData("tamil-nadu");
+
+  const handleRegionChange = (regionKey: string) => {
+    const regionData = getRegionalData(regionKey);
+    if (regionData) {
+      onInputsChange({
+        ...inputs,
+        selectedRegion: regionKey,
+        electricityCost: regionData.electricityCost,
+        laborCost: regionData.laborCost,
+        carbonCreditValue: regionData.carbonCreditValue,
+      });
+    }
+  };
+
   const sensitivityCards = useMemo(() => {
     const scenarios = [
       {
@@ -177,6 +201,32 @@ const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: In
                   </button>
                 ))}
               </div>
+
+              {/* NEW: Region Selector */}
+              <div className="mt-6">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Map className="h-4 w-4 text-accent" />
+                  Production region (India)
+                </div>
+                <Select value={inputs.selectedRegion || "tamil-nadu"} onValueChange={handleRegionChange}>
+                  <SelectTrigger className="w-full border-white/10 bg-black/20">
+                    <SelectValue placeholder="Select a region" />
+                  </SelectTrigger>
+                  <SelectContent className="border-white/10 bg-black/40 text-foreground">
+                    {Object.entries(indianRegionalData).map(([key, data]) => (
+                      <SelectItem key={key} value={key} className="cursor-pointer">
+                        {data.state} — ₹{(data.electricityCost * 75).toFixed(0)}/kWh
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {currentRegion && (
+                  <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs text-muted-foreground">
+                    <p><strong>Sugar mills:</strong> {currentRegion.sugarmillDensity}</p>
+                    <p><strong>Key incentives:</strong> {currentRegion.majorIncentives.slice(0, 2).join(", ")}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
@@ -187,9 +237,9 @@ const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: In
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Daily GO output", value: `${liveResults.goProduced.toFixed(1)} kg` },
-                  { label: "Annual revenue", value: formatCompactCurrency(liveResults.yearlyRevenue) },
+                  { label: "Annual revenue", value: formatCompactCurrency(liveResults.yearlyRevenue + liveResults.yearlyFarbonCreditRevenue) },
                   { label: "ROI", value: `${liveResults.roiPercent.toFixed(1)}%` },
-                  { label: "Payback", value: liveResults.paybackYears === Infinity ? "N/A" : `${liveResults.paybackYears.toFixed(1)} yrs` },
+                  { label: "Carbon credit/yr", value: formatCompactCurrency(liveResults.yearlyFarbonCreditRevenue) },
                 ].map((item) => (
                   <div key={item.label} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
                     <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">{item.label}</p>

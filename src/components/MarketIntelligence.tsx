@@ -161,7 +161,7 @@ const MarketIntelligence = () => {
             </button>
           ))}
         </SectionReveal>
-        <SectionReveal delayMs={340} className="mx-auto max-w-6xl">
+        <SectionReveal delayMs={340} className="mx-auto max-w-6xl mt-12">
           <div className="chart-stat-tile">
             <div className="eyebrow-label">Focused application insight</div>
             <div className="mt-2 text-lg font-semibold text-foreground">{useCases[activeApplication]?.title}</div>

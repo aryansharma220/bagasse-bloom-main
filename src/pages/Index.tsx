@@ -13,6 +13,7 @@ const MarketIntelligence = lazy(() => import("@/components/MarketIntelligence"))
 const AIRecommendation = lazy(() => import("@/components/AIRecommendation"));
 const ScenarioComparison = lazy(() => import("@/components/ScenarioComparison"));
 const SavedScenarios = lazy(() => import("@/components/SavedScenarios"));
+const RegionalViabilityHeatmap = lazy(() => import("@/components/RegionalViabilityHeatmap"));
 
 const SectionFallback = ({ copy = "Loading section..." }: { copy?: string }) => (
   <div className="container mx-auto px-6 py-10">
@@ -96,6 +97,13 @@ const Index = () => {
           <Suspense fallback={<SectionFallback copy="Loading production analysis..." />}>
             <SimulationDashboard results={results} />
             <FinancialAnalysis results={results} />
+          </Suspense>
+          <Suspense fallback={<SectionFallback copy="Loading regional analysis..." />}>
+            <div className="section-shell">
+              <div className="container mx-auto px-6">
+                <RegionalViabilityHeatmap inputs={inputs} baselineResults={results} />
+              </div>
+            </div>
           </Suspense>
         </div>
       )}
