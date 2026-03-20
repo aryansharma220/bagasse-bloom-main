@@ -4,8 +4,25 @@ import ChartExportButton from "@/components/ChartExportButton";
 import SectionReveal from "@/components/SectionReveal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { Battery, Droplets, Cpu, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { AllMarketData } from "@/lib/api-types";
 
-const demandData = [
+interface MarketIntelligenceProps {
+  liveData?: AllMarketData | null;
+  loading?: boolean;
+  error?: string | null;
+  onRefresh?: () => void;
+  autoRefreshMinutes?: number;
+}
+
+const useCases = [
+  { icon: Battery, title: "Energy Storage", desc: "Lithium-ion battery anodes, supercapacitors, fuel cells", share: "35%" },
+  { icon: Droplets, title: "Water Treatment", desc: "Heavy metal removal, desalination membranes, purification", share: "25%" },
+  { icon: Cpu, title: "Electronics & Sensors", desc: "Flexible displays, biosensors, conductive inks", share: "22%" },
+  { icon: Shield, title: "Composites & Coatings", desc: "Anti-corrosion, structural reinforcement, packaging", share: "18%" },
+];
+
+const fallbackDemandData = [
   { year: "2020", demand: 120 },
   { year: "2021", demand: 175 },
   { year: "2022", demand: 250 },
@@ -17,7 +34,7 @@ const demandData = [
   { year: "2028", demand: 1850 },
 ];
 
-const priceData = [
+const fallbackPriceData = [
   { year: "2020", price: 220 },
   { year: "2021", price: 200 },
   { year: "2022", price: 180 },
@@ -29,17 +46,31 @@ const priceData = [
   { year: "2028", price: 110 },
 ];
 
-const useCases = [
-  { icon: Battery, title: "Energy Storage", desc: "Lithium-ion battery anodes, supercapacitors, fuel cells", share: "35%" },
-  { icon: Droplets, title: "Water Treatment", desc: "Heavy metal removal, desalination membranes, purification", share: "25%" },
-  { icon: Cpu, title: "Electronics & Sensors", desc: "Flexible displays, biosensors, conductive inks", share: "22%" },
-  { icon: Shield, title: "Composites & Coatings", desc: "Anti-corrosion, structural reinforcement, packaging", share: "18%" },
-];
-
-const MarketIntelligence = () => {
+const MarketIntelligence = ({
+  liveData,
+  loading = false,
+  error = null,
+  onRefresh,
+  autoRefreshMinutes = 15,
+}: MarketIntelligenceProps) => {
   const [activeApplication, setActiveApplication] = useState(0);
   const demandChartRef = useRef<HTMLDivElement>(null);
   const priceChartRef = useRef<HTMLDivElement>(null);
+
+  const liveGoAvg = liveData?.marketPrices?.goPriceAvg;
+  const liveGoMin = liveData?.marketPrices?.goPriceMin;
+  const liveGoMax = liveData?.marketPrices?.goPriceMax;
+  const liveConfidence = liveData?.marketPrices?.confidence;
+  const liveTimestamp = liveData?.marketPrices?.timestamp;
+  const liveNews = liveData?.news || [];
+  const demandData = liveData?.marketSeries?.demandSeries?.length
+    ? liveData.marketSeries.demandSeries
+    : fallbackDemandData;
+  const priceData = liveData?.marketSeries?.priceSeries?.length
+    ? liveData.marketSeries.priceSeries
+    : fallbackPriceData;
+
+  const latestYearPrice = Number.isFinite(liveGoAvg) ? Number(liveGoAvg) : 110;
 
   return (
     <section className="section-shell" id="market">
@@ -58,8 +89,8 @@ const MarketIntelligence = () => {
           {[
             { label: "2028 demand", value: 1850, formatter: (value: number) => `${value.toFixed(0)} MT` },
             { label: "Demand CAGR", value: 38, formatter: (value: number) => `${value.toFixed(0)}%` },
-            { label: "2028 price", value: 110, formatter: (value: number) => `$${value.toFixed(0)}/kg` },
-            { label: "Largest use case", value: 35, formatter: (value: number) => `${value.toFixed(0)}% share` },
+            { label: "Live GO avg", value: latestYearPrice, formatter: (value: number) => `$${value.toFixed(0)}/kg` },
+            { label: "Confidence", value: Number.isFinite(liveConfidence) ? Number(liveConfidence) : 0, formatter: (value: number) => `${Math.round(value * 100)}%` },
           ].map((metric) => (
             <div key={metric.label} className="metric-card text-center">
               <div className="mb-1 text-2xl font-semibold text-primary md:text-3xl">
@@ -68,6 +99,29 @@ const MarketIntelligence = () => {
               <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{metric.label}</div>
             </div>
           ))}
+        </SectionReveal>
+
+        <SectionReveal delayMs={80} className="mx-auto mb-8 max-w-6xl">
+          <div className="chart-stat-tile">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="eyebrow-label">Live market feed</div>
+              <Button type="button" variant="secondary" onClick={onRefresh} disabled={loading || !onRefresh}>
+                {loading ? "Refreshing..." : "Refresh live data"}
+              </Button>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {loading && "Refreshing real-time AI market snapshot..."}
+              {!loading && error && `Live feed unavailable: ${error}`}
+              {!loading && !error && liveTimestamp && `Last updated ${new Date(liveTimestamp).toLocaleString()}.`}
+              {!loading && !error && !liveTimestamp && "Using baseline market context."}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Auto-refresh every {autoRefreshMinutes} minutes.</p>
+            {Number.isFinite(liveGoMin) && Number.isFinite(liveGoMax) && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <div className="chart-note">GO range: ${Number(liveGoMin).toFixed(0)}-${Number(liveGoMax).toFixed(0)}/kg</div>
+              </div>
+            )}
+          </div>
         </SectionReveal>
 
         <div className="mx-auto mb-16 grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
@@ -105,7 +159,7 @@ const MarketIntelligence = () => {
               </ResponsiveContainer>
             </div>
             <div className="mt-6 flex flex-wrap gap-2">
-              <div className="chart-note">2028 demand: 1850 MT</div>
+              <div className="chart-note">2028 demand: {demandData[demandData.length - 1]?.demand || 1850} MT</div>
               <div className="chart-note">Projected CAGR: 38%</div>
             </div>
           </SectionReveal>
@@ -139,7 +193,7 @@ const MarketIntelligence = () => {
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground">Reference: industry reports and publicly available research summaries.</p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <div className="chart-note">2020 to 2028: $220 → $110</div>
+              <div className="chart-note">2020 to 2028: $220 → ${latestYearPrice.toFixed(0)}</div>
               <div className="chart-note">Lower pricing as scale improves</div>
             </div>
           </SectionReveal>
@@ -170,6 +224,26 @@ const MarketIntelligence = () => {
             </p>
           </div>
         </SectionReveal>
+
+        {liveNews.length > 0 && (
+          <SectionReveal delayMs={380} className="mx-auto mt-8 max-w-6xl">
+            <div className="glass-panel neon-border p-6">
+              <h3 className="mb-4 text-lg font-semibold text-foreground">Latest market signals</h3>
+              <div className="space-y-3">
+                {liveNews.slice(0, 4).map((item, idx) => (
+                  <div key={`${item.title || "signal"}-${idx}`} className="rounded-2xl border border-white/8 bg-white/[0.04] p-4">
+                    <div className="text-sm font-medium text-foreground">{item.title || "Market update"}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {(item.source || "Unknown source")}
+                      {item.date ? ` • ${item.date}` : ""}
+                      {item.relevance ? ` • ${item.relevance}` : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SectionReveal>
+        )}
       </div>
     </section>
   );

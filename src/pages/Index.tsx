@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import ProcessFlow from "@/components/ProcessFlow";
@@ -6,6 +6,8 @@ import InputModule, { defaultSimulationInputs, type SimulationInputs } from "@/c
 import Footer from "@/components/Footer";
 import { runSimulation, type SimulationResults } from "@/lib/simulation";
 import { createSavedScenario, getSavedScenarios, persistSavedScenarios, type SavedScenario } from "@/lib/scenario-storage";
+import { aiService, dataService } from "@/lib/api-client";
+import type { AllMarketData, ApiResponse, InvestmentRecommendationData } from "@/lib/api-types";
 
 const SimulationDashboard = lazy(() => import("@/components/SimulationDashboard"));
 const FinancialAnalysis = lazy(() => import("@/components/FinancialAnalysis"));
@@ -23,16 +25,79 @@ const SectionFallback = ({ copy = "Loading section..." }: { copy?: string }) => 
   </div>
 );
 
+const MARKET_AUTO_REFRESH_MS = 15 * 60 * 1000;
+
 const Index = () => {
   const [inputs, setInputs] = useState<SimulationInputs>(defaultSimulationInputs);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
+  const [liveMarketData, setLiveMarketData] = useState<AllMarketData | null>(null);
+  const [marketLoading, setMarketLoading] = useState(false);
+  const [marketError, setMarketError] = useState<string | null>(null);
+  const [liveRecommendation, setLiveRecommendation] = useState<string | null>(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
+  const [recommendationError, setRecommendationError] = useState<string | null>(null);
 
   useEffect(() => {
     setSavedScenarios(getSavedScenarios());
   }, []);
 
+  const refreshMarketData = useCallback(async () => {
+    setMarketLoading(true);
+    setMarketError(null);
+
+    try {
+      const response = (await dataService.getAllMarketData()) as ApiResponse<AllMarketData>;
+      if (response?.success && response?.data) {
+        setLiveMarketData(response.data);
+        return;
+      }
+
+      setMarketError(response?.error || "Failed to load live market data");
+    } catch (error) {
+      setMarketError(error instanceof Error ? error.message : "Failed to load live market data");
+    } finally {
+      setMarketLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshMarketData();
+
+    const intervalId = setInterval(() => {
+      void refreshMarketData();
+    }, MARKET_AUTO_REFRESH_MS);
+
+    return () => clearInterval(intervalId);
+  }, [refreshMarketData]);
+
   const results: SimulationResults = useMemo(() => runSimulation(inputs), [inputs]);
+
+  useEffect(() => {
+    if (!hasInteracted) return;
+
+    const timer = setTimeout(async () => {
+      setRecommendationLoading(true);
+      setRecommendationError(null);
+
+      try {
+        const response = (await aiService.getInvestmentRecommendation(
+          inputs,
+          results,
+          undefined,
+          undefined
+        )) as ApiResponse<InvestmentRecommendationData>;
+        const liveText = response?.success ? response.data?.recommendation : null;
+        setLiveRecommendation(typeof liveText === "string" ? liveText : null);
+      } catch (error) {
+        setRecommendationError(error instanceof Error ? error.message : "Failed to refresh AI recommendation");
+      } finally {
+        setRecommendationLoading(false);
+      }
+    }, 900);
+
+    return () => clearTimeout(timer);
+  }, [hasInteracted, inputs, results]);
 
   const handleInputsChange = (nextInputs: SimulationInputs) => {
     setInputs(nextInputs);
@@ -108,11 +173,22 @@ const Index = () => {
         </div>
       )}
       <Suspense fallback={<SectionFallback copy="Loading market intelligence..." />}>
-        <MarketIntelligence />
+        <MarketIntelligence
+          liveData={liveMarketData}
+          loading={marketLoading}
+          error={marketError}
+          onRefresh={refreshMarketData}
+          autoRefreshMinutes={15}
+        />
       </Suspense>
       {hasInteracted && (
         <Suspense fallback={<SectionFallback copy="Loading recommendation engine..." />}>
-          <AIRecommendation results={results} />
+          <AIRecommendation
+            results={results}
+            liveRecommendation={liveRecommendation}
+            isLiveLoading={recommendationLoading}
+            liveError={recommendationError}
+          />
         </Suspense>
       )}
       <Footer />

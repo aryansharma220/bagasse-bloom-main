@@ -4,6 +4,9 @@ import SectionReveal from "@/components/SectionReveal";
 
 interface Props {
   results: SimulationResults;
+  liveRecommendation?: string | null;
+  isLiveLoading?: boolean;
+  liveError?: string | null;
 }
 
 const levelConfig = {
@@ -12,9 +15,10 @@ const levelConfig = {
   low: { icon: XCircle, color: "text-destructive", border: "border-destructive/30", bg: "bg-destructive/5", label: "LOW VIABILITY" },
 };
 
-const AIRecommendation = ({ results }: Props) => {
+const AIRecommendation = ({ results, liveRecommendation = null, isLiveLoading = false, liveError = null }: Props) => {
   const config = levelConfig[results.recommendationLevel];
   const Icon = config.icon;
+  const recommendationText = liveRecommendation || results.recommendation;
 
   return (
     <section className="section-shell">
@@ -37,7 +41,12 @@ const AIRecommendation = ({ results }: Props) => {
             </div>
             <div className="flex items-start gap-4">
               <Icon className={`mt-1 h-8 w-8 flex-shrink-0 ${config.color}`} />
-              <p className="text-lg text-foreground leading-relaxed">{results.recommendation}</p>
+              <p className="text-lg text-foreground leading-relaxed whitespace-pre-line">{recommendationText}</p>
+            </div>
+            <div className="mt-4 text-xs text-muted-foreground">
+              {isLiveLoading && "Refreshing AI recommendation from live market context..."}
+              {!isLiveLoading && liveError && `Live AI unavailable: ${liveError}. Showing model-based local recommendation.`}
+              {!isLiveLoading && !liveError && liveRecommendation && "Live AI recommendation is active."}
             </div>
           </SectionReveal>
 

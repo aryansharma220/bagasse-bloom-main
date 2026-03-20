@@ -121,7 +121,14 @@ Before using the results for investment or engineering decisions, validate the a
 
 ## Current Scope
 
-This repository currently contains a client-side application only. There is no backend service, database, authentication layer, or live market data integration in the current implementation.
+This repository now includes:
+
+- frontend simulation app (Vite + React)
+- lightweight backend API under [server/index.js](server/index.js)
+- OpenRouter-powered AI analysis endpoints
+- market-data aggregation/scraper service with fallbacks
+
+It still does not include user authentication or a persistent database.
 
 ## Branding
 
