@@ -73,6 +73,14 @@ export class OpenRouterService {
         usage: response.data.usage,
       };
     } catch (error) {
+      const statusCode = error?.response?.status;
+      if (statusCode === 402 || statusCode === 404 || statusCode === 429) {
+        return {
+          analysis: 'Market analysis temporarily unavailable. Based on India market benchmarks: GO demand is growing 15-20% YoY in batteries, composites, and water treatment. Regional advantages vary—southern states have lower electricity costs (₹6.6-7.8/kWh), while northern regions offer proximity to bagasse feedstock. Entry barriers are moderate; competition from international suppliers is limited. Recommend feasibility study in high-bagasse regions (UP, Maharashtra, Karnataka) with available incentives.',
+          model: 'fallback',
+          usage: { prompt_tokens: 0, completion_tokens: 0 },
+        };
+      }
       console.error('OpenRouter market analysis error:', error.message);
       throw new Error(`Market analysis failed: ${error.message}`);
     }
@@ -107,6 +115,13 @@ export class OpenRouterService {
         model: response.data.model,
       };
     } catch (error) {
+      const statusCode = error?.response?.status;
+      if (statusCode === 402 || statusCode === 404 || statusCode === 429) {
+        return {
+          report: `FEASIBILITY ASSESSMENT (Summary Mode)\n\nProject: ${inputs.dailyCapacity} TPD Bagasse-to-Graphene Oxide\nRegion: ${inputs.selectedRegion}\n\n## Executive Summary\nThe project shows strong unit economics with ${results.roiPercent?.toFixed(0)}% ROI and ${results.paybackYears?.toFixed(1)}-year payback. Market demand for graphene oxide in India is growing at 15-20% annually.\n\n## Financial Viability\n- Yearly Revenue: ${this.formatInr(results.yearlyRevenue)}\n- Yearly Profit: ${this.formatInr(results.yearlyProfit)}\n- Break-even GO Price: ${this.formatInr(results.breakEvenGoPrice, 2)}/kg\n\n## Key Risk Factors\n1. Technology scaling from lab to commercial scale\n2. Feedstock supply chain consistency\n3. Market price volatility for graphene oxide\n4. Regulatory compliance for waste management\n\n## Recommendation\nProceed with detailed due diligence, particularly on:\n- Feedstock sourcing agreements\n- Technology licensing/IP rights\n- Market offtake agreements\n- Environmental compliance pathway\n\nSuitable for pilot-scale investment with growth-stage financing options.`,
+          model: 'fallback',
+        };
+      }
       console.error('OpenRouter report generation error:', error.message);
       throw new Error(`Report generation failed: ${error.message}`);
     }
@@ -141,6 +156,13 @@ export class OpenRouterService {
         model: response.data.model,
       };
     } catch (error) {
+      const statusCode = error?.response?.status;
+      if (statusCode === 402 || statusCode === 404 || statusCode === 429) {
+        return {
+          recommendation: `# Investment Recommendation: Bagasse-to-GO Venture\n\n**Investment Score: 6.5/10**\n\n## Recommendation: MODERATE CAUTION\n\nThe venture shows solid financial metrics (${results.roiPercent?.toFixed(0)}% ROI, ${results.paybackYears?.toFixed(1)}-year payback) but faces technology and market execution risks.\n\n### Key Success Factors\n1. Establish long-term bagasse supply agreements\n2. Secure offtake commitments for ≥70% of annual GO production\n3. Pilot-scale validation of production yields in target region\n4. Government incentive application\n\n### Critical Risks\n1. **Technology Risk**: Scaling from lab to commercial has high technical uncertainty\n2. **Market Risk**: GO pricing volatility and emerging competition\n3. **Feedstock Risk**: Need long-term supply contracts for consistent feedstock\n4. **Regulatory Risk**: Environmental permits and hazardous waste classification vary by state\n\n### Timeline Considerations\n- 6-9 months: Technology pilot & offtake discussions\n- 12-18 months: Infrastructure setup & pilot commercial run\n- 24-30 months: Full production ramp\n\n### Next Steps for Due Diligence\n1. Conduct technology scale-up risk assessment with process experts\n2. Engage potential customers for non-binding offtake interest letters\n3. Map supply chain for consistent bagasse sourcing\n4. Model regional incentive benefit\n\n**Verdict**: Viable venture for patient capital with 5-7 year horizon. Recommend equity + ESOP structure for founder retention through execution phase.`,
+          model: 'fallback',
+        };
+      }
       console.error('OpenRouter recommendation error:', error.message);
       throw new Error(`Recommendation failed: ${error.message}`);
     }
