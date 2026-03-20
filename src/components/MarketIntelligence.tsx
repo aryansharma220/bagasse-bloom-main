@@ -7,6 +7,8 @@ import { Battery, Droplets, Cpu, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AllMarketData } from "@/lib/api-types";
 
+const INR_PER_USD = 83;
+
 interface MarketIntelligenceProps {
   liveData?: AllMarketData | null;
   loading?: boolean;
@@ -69,8 +71,9 @@ const MarketIntelligence = ({
   const priceData = liveData?.marketSeries?.priceSeries?.length
     ? liveData.marketSeries.priceSeries
     : fallbackPriceData;
+  const priceDataInr = priceData.map((point) => ({ ...point, priceInr: Number((point.price * INR_PER_USD).toFixed(0)) }));
 
-  const latestYearPrice = Number.isFinite(liveGoAvg) ? Number(liveGoAvg) : 110;
+  const latestYearPriceInr = Number.isFinite(liveGoAvg) ? Number((Number(liveGoAvg) * INR_PER_USD).toFixed(0)) : 9130;
 
   return (
     <section className="section-shell" id="market">
@@ -81,15 +84,15 @@ const MarketIntelligence = ({
             Pair the model with <span className="text-gradient-accent">cleaner market signals</span>
           </h2>
           <p className="section-copy mx-auto mt-5 max-w-2xl">
-            The market layer adds visual context around demand growth, pricing movement, and likely application areas for graphene oxide.
+            The market layer adds India-focused context around demand growth, domestic pricing movement, and likely application areas for graphene oxide.
           </p>
         </SectionReveal>
 
         <SectionReveal delayMs={60} className="mx-auto mb-8 grid max-w-6xl grid-cols-2 gap-4 lg:grid-cols-4">
           {[
-            { label: "2028 demand", value: 1850, formatter: (value: number) => `${value.toFixed(0)} MT` },
-            { label: "Demand CAGR", value: 38, formatter: (value: number) => `${value.toFixed(0)}%` },
-            { label: "Live GO avg", value: latestYearPrice, formatter: (value: number) => `$${value.toFixed(0)}/kg` },
+              { label: "India 2028 demand", value: 1850, formatter: (value: number) => `${value.toFixed(0)} MT` },
+              { label: "India demand CAGR", value: 38, formatter: (value: number) => `${value.toFixed(0)}%` },
+              { label: "Live GO avg", value: latestYearPriceInr, formatter: (value: number) => `₹${value.toFixed(0)}/kg` },
             { label: "Confidence", value: Number.isFinite(liveConfidence) ? Number(liveConfidence) : 0, formatter: (value: number) => `${Math.round(value * 100)}%` },
           ].map((metric) => (
             <div key={metric.label} className="metric-card text-center">
@@ -118,7 +121,9 @@ const MarketIntelligence = ({
             <p className="mt-1 text-xs text-muted-foreground">Auto-refresh every {autoRefreshMinutes} minutes.</p>
             {Number.isFinite(liveGoMin) && Number.isFinite(liveGoMax) && (
               <div className="mt-3 flex flex-wrap gap-2">
-                <div className="chart-note">GO range: ${Number(liveGoMin).toFixed(0)}-${Number(liveGoMax).toFixed(0)}/kg</div>
+                <div className="chart-note">
+                  GO range: ₹{(Number(liveGoMin) * INR_PER_USD).toFixed(0)}-₹{(Number(liveGoMax) * INR_PER_USD).toFixed(0)}/kg
+                </div>
               </div>
             )}
           </div>
@@ -128,8 +133,8 @@ const MarketIntelligence = ({
           <SectionReveal delayMs={100} className="chart-panel neon-border">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h3 className="chart-title">Global GO demand</h3>
-                <p className="chart-copy">Metric tons with a strong projected long-term growth curve.</p>
+                <h3 className="chart-title">India GO demand</h3>
+                <p className="chart-copy">Metric tons with an India-focused projected long-term growth curve.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="chart-note neon-text">Demand outlook</div>
@@ -167,8 +172,8 @@ const MarketIntelligence = ({
           <SectionReveal delayMs={180} className="chart-panel neon-border">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h3 className="chart-title">GO price trend</h3>
-                <p className="chart-copy">Indicative $/kg trajectory as production scales over time.</p>
+                <h3 className="chart-title">GO price trend (India)</h3>
+                <p className="chart-copy">Indicative INR/kg trajectory as production scales over time.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="chart-note neon-text">Pricing trend</div>
@@ -181,20 +186,20 @@ const MarketIntelligence = ({
             </div>
             <div ref={priceChartRef} className="rounded-[24px] border border-white/10 bg-black/20 p-4 md:p-5">
               <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={priceData}>
+                <LineChart data={priceDataInr}>
                   <CartesianGrid vertical={false} stroke="hsl(0 0% 100% / 0.06)" strokeDasharray="4 10" />
                   <XAxis dataKey="year" stroke="hsl(220, 10%, 55%)" fontSize={12} />
                   <YAxis stroke="hsl(220, 10%, 55%)" fontSize={12} />
                   <Tooltip contentStyle={{ background: "hsl(220 22% 10% / 0.92)", border: "1px solid hsl(0 0% 100% / 0.08)", borderRadius: "16px", color: "hsl(210 20% 96%)", backdropFilter: "blur(14px)" }} labelStyle={{ color: "hsl(210 20% 96%)", fontWeight: 600 }} />
-                  <Line className="line-glow" type="monotone" dataKey="price" stroke="hsl(194 82% 71% / 0.28)" strokeWidth={8} dot={false} isAnimationActive={false} name="Price glow" />
-                  <Line type="monotone" dataKey="price" stroke="hsl(194 82% 71%)" strokeWidth={2.5} dot={{ fill: "hsl(194 82% 71%)", strokeWidth: 0, r: 3.5 }} activeDot={{ r: 5, fill: "hsl(164 70% 57%)" }} name="Price ($/kg)" />
+                  <Line className="line-glow" type="monotone" dataKey="priceInr" stroke="hsl(194 82% 71% / 0.28)" strokeWidth={8} dot={false} isAnimationActive={false} name="Price glow" />
+                  <Line type="monotone" dataKey="priceInr" stroke="hsl(194 82% 71%)" strokeWidth={2.5} dot={{ fill: "hsl(194 82% 71%)", strokeWidth: 0, r: 3.5 }} activeDot={{ r: 5, fill: "hsl(164 70% 57%)" }} name="Price (INR/kg)" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground">Reference: industry reports and publicly available research summaries.</p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <div className="chart-note">2020 to 2028: $220 → ${latestYearPrice.toFixed(0)}</div>
-              <div className="chart-note">Lower pricing as scale improves</div>
+                  <div className="chart-note">2020 to 2028: ₹{(220 * INR_PER_USD).toFixed(0)} → ₹{latestYearPriceInr.toFixed(0)}</div>
+                  <div className="chart-note">Lower India pricing as scale improves</div>
             </div>
           </SectionReveal>
         </div>

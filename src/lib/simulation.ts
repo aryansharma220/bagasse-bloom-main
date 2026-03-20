@@ -1,5 +1,12 @@
 import type { SimulationInputs } from "@/components/InputModule";
 
+const INR_PER_USD = 83;
+
+const formatInr = (usdValue: number, digits = 0) => {
+  if (!Number.isFinite(usdValue)) return "N/A";
+  return `₹${(usdValue * INR_PER_USD).toFixed(digits)}`;
+};
+
 export interface SimulationResults {
   // Production
   dryBagasse: number; // tons/day
@@ -10,7 +17,7 @@ export interface SimulationResults {
 
   // Energy
   energyRequired: number; // kWh/day
-  energyCostDaily: number; // $/day
+  energyCostDaily: number; // internal USD/day
 
   // Costs
   dailyOpex: number;
@@ -24,8 +31,8 @@ export interface SimulationResults {
 
   // Carbon Credits (NEW)
   carbonSaved: number; // tons CO2/year
-  carbonCreditValue: number; // $/ton CO2
-  yearlyFarbonCreditRevenue: number; // $ per year
+  carbonCreditValue: number; // internal USD/ton CO2
+  yearlyFarbonCreditRevenue: number; // internal USD per year
 
   // Financial
   yearlyProfit: number; // Now includes carbon credits
@@ -33,7 +40,7 @@ export interface SimulationResults {
   paybackYears: number;
 
   // Risk & Sensitivity (NEW)
-  breakEvenGoPrice: number; // $/kg
+  breakEvenGoPrice: number; // internal USD/kg
   breakEvenCapacity: number; // tons/day
   capacityUtilizationForBreakeven: number; // % at 10 tons/day
   priceNarginPercentage: number; // % of revenue that is profit margin
@@ -68,7 +75,7 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
   const energyRequired = inputs.bagasseTons * 500;
   const energyCostDaily = energyRequired * inputs.electricityCost;
 
-  // Chemical costs: ~$20/kg GO for chemicals
+  // Chemical costs baseline (internal model currency)
   const chemicalCostDaily = goProduced * 20;
 
   // Daily OPEX
@@ -83,7 +90,7 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
 
   // Carbon Credits (NEW PHASE 2)
   const carbonSaved = inputs.bagasseTons * 365 * 1.5; // tons CO2/year
-  const carbonCreditValue = inputs.carbonCreditValue || 2.4; // $/ton CO2 (default from regional)
+  const carbonCreditValue = inputs.carbonCreditValue || 2.4; // internal USD/ton CO2 (default from regional)
   const yearlyFarbonCreditRevenue = carbonSaved * carbonCreditValue;
 
   // Total Revenue (GO + Carbon Credits)
@@ -100,7 +107,7 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
   const breakEvenGoPrice = yearlyOpex > 0 ? (yearlyOpex - yearlyFarbonCreditRevenue) / goProducedYearly : 0;
 
   // At what capacity does the plant break even? (fixed costs amortized, variable costs increase)
-  // Assume fixed: $100/day, variable: $0.3/kg GO
+  // Assume fixed and variable baseline costs in model currency
   const fixedCostDaily = 100;
   const variableCostPerKg = 0.3;
   const capacityUtilizationForBreakeven = inputs.bagasseTons > 0 ? 
@@ -139,13 +146,13 @@ export function runSimulation(inputs: SimulationInputs): SimulationResults {
     recommendation = `High ROI of ${roiPercent.toFixed(0)}% — Proceed with investment. Strong resilience to price fluctuations.`;
     suggestions.push(`Install ${inputs.bagasseTons} ton/day processing unit`);
     suggestions.push("Secure long-term bagasse supply contracts");
-    suggestions.push("Apply for carbon credit certification (adds ${yearlyFarbonCreditRevenue.toFixed(0)}/year)");
-    suggestions.push(`Plant survives even if GO price drops to $${breakEvenGoPrice.toFixed(0)}/kg`);
+    suggestions.push(`Apply for carbon credit certification (adds ${formatInr(yearlyFarbonCreditRevenue)}/year)`);
+    suggestions.push(`Plant survives even if GO price drops to ${formatInr(breakEvenGoPrice)}/kg`);
   } else if (roiPercent > 15) {
     recommendationLevel = "moderate";
     recommendation = `Moderate ROI of ${roiPercent.toFixed(0)}% — Viable with optimizations. Action required on cost/revenue.`;
-    suggestions.push(`Critical: GO price must stay above $${breakEvenGoPrice.toFixed(0)}/kg`);
-    suggestions.push("Negotiate lower electricity rates (sensitivity: ±10% = ${(Math.abs(elecCost_down10 - elecCost_up10).toFixed(0))}/ROI swing)");
+    suggestions.push(`Critical: GO price must stay above ${formatInr(breakEvenGoPrice)}/kg`);
+    suggestions.push(`Negotiate lower electricity rates (sensitivity: ±10% = ${Math.abs(elecCost_down10 - elecCost_up10).toFixed(0)} ROI pts swing)`);
     suggestions.push("Explore government subsidies & carbon credit certification");
     suggestions.push(`Consider scaling to ${Math.ceil(inputs.bagasseTons * 1.5)} tons/day for better margins`);
   } else {

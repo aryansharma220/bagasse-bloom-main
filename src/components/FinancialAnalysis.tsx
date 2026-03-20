@@ -9,6 +9,8 @@ interface Props {
   results: SimulationResults;
 }
 
+const INR_PER_USD = 83;
+
 const FinancialAnalysis = ({ results }: Props) => {
   const [activeBarKey, setActiveBarKey] = useState<"all" | "revenue" | "cost">("all");
   const [activeCostIndex, setActiveCostIndex] = useState(0);
@@ -31,9 +33,10 @@ const FinancialAnalysis = ({ results }: Props) => {
   const COLORS = ["hsl(164 70% 57%)", "hsl(194 82% 71%)", "hsl(221 66% 64%)"];
 
   const formatCurrency = (v: number) => {
-    if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-    if (v >= 1000) return `$${(v / 1000).toFixed(0)}K`;
-    return `$${v}`;
+    const inrValue = v * INR_PER_USD;
+    if (inrValue >= 10_000_000) return `₹${(inrValue / 10_000_000).toFixed(2)} Cr`;
+    if (inrValue >= 100_000) return `₹${(inrValue / 100_000).toFixed(1)} L`;
+    return `₹${inrValue.toFixed(0)}`;
   };
 
   const summaryNotes = [
@@ -78,7 +81,7 @@ const FinancialAnalysis = ({ results }: Props) => {
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h3 className="chart-title">Revenue vs cost</h3>
-                <p className="chart-copy">Side-by-side comparison across daily, monthly, and yearly horizons.</p>
+                <p className="chart-copy">Side-by-side comparison across daily, monthly, and yearly horizons (India currency view).</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="chart-note neon-text">Cashflow comparison</div>

@@ -1,14 +1,23 @@
 import axios from 'axios';
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_BASE_URL = 'https://openrouter.io/api/v1/chat/completions';
-const OPENROUTER_MARKET_MODEL = process.env.OPENROUTER_MARKET_MODEL || 'perplexity/sonar';
-const CACHE_TTL_MINUTES = Number(process.env.MARKET_CACHE_TTL_MINUTES || '20');
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export class ScraperService {
   constructor() {
     this.cache = new Map();
-    this.cacheTimeout = CACHE_TTL_MINUTES * 60 * 1000;
+    this.cacheTimeout = this.getCacheTtlMinutes() * 60 * 1000;
+  }
+
+  getApiKey() {
+    return process.env.OPENROUTER_API_KEY;
+  }
+
+  getMarketModel() {
+    return process.env.OPENROUTER_MARKET_MODEL || 'perplexity/sonar';
+  }
+
+  getCacheTtlMinutes() {
+    return Number(process.env.MARKET_CACHE_TTL_MINUTES || '20');
   }
 
   async getLiveMarketIntelligence(forceRefresh = false) {
@@ -17,7 +26,8 @@ export class ScraperService {
       return this.cache.get(cacheKey);
     }
 
-    if (!OPENROUTER_API_KEY) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
       throw new Error('OPENROUTER_API_KEY is required for real-time market data');
     }
 
@@ -72,7 +82,7 @@ Required JSON shape:
     const response = await axios.post(
       OPENROUTER_BASE_URL,
       {
-        model: OPENROUTER_MARKET_MODEL,
+        model: this.getMarketModel(),
         temperature: 0.1,
         max_tokens: 1800,
         messages: [
@@ -88,7 +98,7 @@ Required JSON shape:
       },
       {
         headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         timeout: 30000,

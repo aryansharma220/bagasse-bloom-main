@@ -7,11 +7,14 @@ interface ExportSummaryOptions {
   scenarioName?: string;
 }
 
+const INR_PER_USD = 83;
+
 const formatCurrency = (value: number) => {
   if (!Number.isFinite(value)) return "N/A";
-  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(2)}`;
+  const inrValue = value * INR_PER_USD;
+  if (Math.abs(inrValue) >= 10_000_000) return `₹${(inrValue / 10_000_000).toFixed(2)} Cr`;
+  if (Math.abs(inrValue) >= 100_000) return `₹${(inrValue / 100_000).toFixed(1)} L`;
+  return `₹${inrValue.toFixed(2)}`;
 };
 
 const formatNumber = (value: number, digits = 2) => {

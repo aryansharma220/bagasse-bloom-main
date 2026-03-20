@@ -168,7 +168,7 @@ router.get('/market-news', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Market news error:', error);
+    console.error('Market news error:', error?.message || error);
     res.status(500).json({
       error: error.message || 'Failed to fetch market news',
       timestamp: new Date().toISOString(),
@@ -190,7 +190,7 @@ router.get('/market-series', async (req, res) => {
       data: series,
     });
   } catch (error) {
-    console.error('Market series error:', error);
+    console.error('Market series error:', error?.message || error);
     res.status(500).json({
       error: error.message || 'Failed to fetch market series',
       timestamp: new Date().toISOString(),
@@ -224,7 +224,7 @@ router.get('/all', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('All data error:', error);
+    console.error('All data error:', error?.message || error);
     res.status(500).json({
       error: error.message || 'Failed to fetch all market data',
       timestamp: new Date().toISOString(),

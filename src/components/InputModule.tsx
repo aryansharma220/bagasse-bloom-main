@@ -5,6 +5,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { runSimulation, type SimulationResults } from "@/lib/simulation";
 import { getRegionalData, indianRegionalData } from "@/lib/regional-data";
 
+const INR_PER_USD = 83;
+const CRORE_INR_PER_MILLION_USD = 8.3;
+
 export interface SimulationInputs {
   bagasseTons: number;
   moisturePercent: number;
@@ -26,10 +29,10 @@ interface InputModuleProps {
 const fields: Array<{ key: keyof SimulationInputs; label: string; unit: string; icon: typeof Factory; defaultVal: number; min: number; max: number; step?: number }> = [
   { key: "bagasseTons", label: "Bagasse Input", unit: "tons/day", icon: Factory, defaultVal: 10, min: 1, max: 1000 },
   { key: "moisturePercent", label: "Moisture Content", unit: "%", icon: Droplets, defaultVal: 45, min: 5, max: 80 },
-  { key: "electricityCost", label: "Electricity Cost", unit: "$/kWh", icon: ZapIcon, defaultVal: 0.08, min: 0.01, max: 1, step: 0.01 },
-  { key: "laborCost", label: "Labor Cost", unit: "$/day", icon: Users, defaultVal: 500, min: 50, max: 10000 },
-  { key: "plantCapex", label: "Plant CAPEX", unit: "$ (million)", icon: Building2, defaultVal: 2, min: 0.1, max: 100, step: 0.1 },
-  { key: "grapheneMarketPrice", label: "GO Market Price", unit: "$/kg", icon: TrendingUp, defaultVal: 150, min: 50, max: 500 },
+  { key: "electricityCost", label: "Electricity Cost", unit: "INR/kWh", icon: ZapIcon, defaultVal: 0.08, min: 0.01, max: 1, step: 0.01 },
+  { key: "laborCost", label: "Labor Cost", unit: "INR/day", icon: Users, defaultVal: 500, min: 50, max: 10000 },
+  { key: "plantCapex", label: "Plant CAPEX", unit: "INR crore", icon: Building2, defaultVal: 2, min: 0.1, max: 100, step: 0.1 },
+  { key: "grapheneMarketPrice", label: "GO Market Price", unit: "INR/kg", icon: TrendingUp, defaultVal: 150, min: 50, max: 500 },
 ];
 
 export const defaultSimulationInputs: SimulationInputs = {
@@ -89,8 +92,8 @@ const fieldMap = Object.fromEntries(fields.map((field) => [field.key, field])) a
 
 const quickTuneFields: Array<{ key: keyof SimulationInputs; label: string; unit: string }> = [
   { key: "bagasseTons", label: "Throughput", unit: "tons/day" },
-  { key: "electricityCost", label: "Energy cost", unit: "$/kWh" },
-  { key: "grapheneMarketPrice", label: "GO price", unit: "$/kg" },
+  { key: "electricityCost", label: "Energy cost", unit: "INR/kWh" },
+  { key: "grapheneMarketPrice", label: "GO price", unit: "INR/kg" },
 ];
 
 const clampInputValue = (key: keyof SimulationInputs, value: number) => {
@@ -99,9 +102,34 @@ const clampInputValue = (key: keyof SimulationInputs, value: number) => {
 };
 
 const formatCompactCurrency = (value: number) => {
-  if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
-  return `$${value.toFixed(0)}`;
+  const inrValue = value * INR_PER_USD;
+  if (Math.abs(inrValue) >= 10_000_000) return `₹${(inrValue / 10_000_000).toFixed(2)} Cr`;
+  if (Math.abs(inrValue) >= 100_000) return `₹${(inrValue / 100_000).toFixed(1)} L`;
+  return `₹${inrValue.toFixed(0)}`;
+};
+
+const toDisplayValue = (key: keyof SimulationInputs, value: number) => {
+  if (key === "electricityCost" || key === "laborCost" || key === "grapheneMarketPrice") {
+    return value * INR_PER_USD;
+  }
+
+  if (key === "plantCapex") {
+    return value * CRORE_INR_PER_MILLION_USD;
+  }
+
+  return value;
+};
+
+const fromDisplayValue = (key: keyof SimulationInputs, value: number) => {
+  if (key === "electricityCost" || key === "laborCost" || key === "grapheneMarketPrice") {
+    return value / INR_PER_USD;
+  }
+
+  if (key === "plantCapex") {
+    return value / CRORE_INR_PER_MILLION_USD;
+  }
+
+  return value;
 };
 
 const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: InputModuleProps) => {
@@ -215,7 +243,7 @@ const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: In
                   <SelectContent className="border-white/10 bg-black/40 text-foreground">
                     {Object.entries(indianRegionalData).map(([key, data]) => (
                       <SelectItem key={key} value={key} className="cursor-pointer">
-                        {data.state} — ₹{(data.electricityCost * 75).toFixed(0)}/kWh
+                        {data.state} — ₹{(data.electricityCost * INR_PER_USD).toFixed(2)}/kWh
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -267,17 +295,17 @@ const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: In
                 <input
                   id={String(f.key)}
                   type="number"
-                  value={inputs[f.key]}
-                  min={f.min}
-                  max={f.max}
+                  value={Number(toDisplayValue(f.key, inputs[f.key]).toFixed(2))}
+                  min={Number(toDisplayValue(f.key, f.min).toFixed(2))}
+                  max={Number(toDisplayValue(f.key, f.max).toFixed(2))}
                   step={f.step || 1}
-                  onChange={(e) => handleChange(f.key, parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleChange(f.key, fromDisplayValue(f.key, parseFloat(e.target.value) || 0))}
                   placeholder={`Enter ${f.label.toLowerCase()}`}
                   title={f.label}
                   className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3.5 font-mono text-lg text-foreground outline-none transition-all duration-300 placeholder:text-muted-foreground/50 focus:border-primary/40 focus:bg-black/30 focus:ring-4 focus:ring-primary/10"
                 />
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Range: {f.min} to {f.max}
+                  Range: {toDisplayValue(f.key, f.min).toFixed(2)} to {toDisplayValue(f.key, f.max).toFixed(2)}
                 </p>
               </div>
             ))}
@@ -299,7 +327,7 @@ const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: In
                         <p className="text-sm font-medium text-foreground">{field.label}</p>
                         <p className="text-xs text-muted-foreground">{field.unit}</p>
                       </div>
-                      <p className="text-sm font-semibold text-primary">{inputs[field.key]}</p>
+                      <p className="text-sm font-semibold text-primary">{toDisplayValue(field.key, inputs[field.key]).toFixed(2)}</p>
                     </div>
                     <input
                       type="range"
@@ -312,8 +340,8 @@ const InputModule = ({ inputs, liveResults, onInputsChange, onFocusResults }: In
                       title={field.label}
                     />
                     <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                      <span>{config.min}</span>
-                      <span>{config.max}</span>
+                      <span>{toDisplayValue(field.key, config.min).toFixed(2)}</span>
+                      <span>{toDisplayValue(field.key, config.max).toFixed(2)}</span>
                     </div>
                   </div>
                 );

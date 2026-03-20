@@ -3,11 +3,11 @@
 
 export interface RegionalData {
   state: string;
-  electricityCost: number; // $/kWh
-  laborCost: number; // $/day
+  electricityCost: number; // internal model currency/kWh (displayed as INR/kWh in UI)
+  laborCost: number; // internal model currency/day (displayed as INR/day in UI)
   bagasseAvailability: number; // tons/year in region
   sugarmillDensity: string; // number of mills
-  carbonCreditValue: number; // $/ton CO2 saved
+  carbonCreditValue: number; // internal model currency/ton CO2 saved
   majorIncentives: string[];
 }
 
@@ -71,7 +71,7 @@ export const indianRegionalData: Record<string, RegionalData> = {
       "Vibrant Gujarat summit support",
       "GST parking & warehousing benefits",
       "Export-oriented unit (EOU) benefits",
-      "Port proximity (globally competitive)"
+      "Port proximity for export competitiveness"
     ]
   },
 

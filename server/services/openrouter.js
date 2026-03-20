@@ -1,14 +1,38 @@
 import axios from 'axios';
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || 'sk-or-v1-placeholder';
-const OPENROUTER_BASE_URL = 'https://openrouter.io/api/v1';
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
 export class OpenRouterService {
   constructor() {
-    this.client = axios.create({
-      baseURL: OPENROUTER_BASE_URL,
+    this.baseUrl = OPENROUTER_BASE_URL;
+  }
+
+  getApiKey() {
+    return process.env.OPENROUTER_API_KEY;
+  }
+
+  getInrPerUsd() {
+    return Number(process.env.INR_PER_USD || 83);
+  }
+
+  formatInr(value, digits = 0) {
+    const inrValue = Number(value || 0) * this.getInrPerUsd();
+    return `₹${inrValue.toLocaleString('en-IN', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })}`;
+  }
+
+  getClient() {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('OPENROUTER_API_KEY is required for AI endpoints');
+    }
+
+    return axios.create({
+      baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -21,8 +45,9 @@ export class OpenRouterService {
   async analyzeMarket(inputs, regionalData) {
     try {
       const prompt = this.buildMarketAnalysisPrompt(inputs, regionalData);
+      const client = this.getClient();
       
-      const response = await this.client.post('/chat/completions', {
+      const response = await client.post('/chat/completions', {
         model: 'openrouter/auto', // Uses best available model
         messages: [
           {
@@ -55,8 +80,9 @@ export class OpenRouterService {
   async generateFeasibilityReport(inputs, results, regionalData) {
     try {
       const prompt = this.buildReportPrompt(inputs, results, regionalData);
+      const client = this.getClient();
       
-      const response = await this.client.post('/chat/completions', {
+      const response = await client.post('/chat/completions', {
         model: 'openrouter/auto',
         messages: [
           {
@@ -88,8 +114,9 @@ export class OpenRouterService {
   async getInvestmentRecommendation(inputs, results, regionalData, scraperData) {
     try {
       const prompt = this.buildRecommendationPrompt(inputs, results, regionalData, scraperData);
+      const client = this.getClient();
       
-      const response = await this.client.post('/chat/completions', {
+      const response = await client.post('/chat/completions', {
         model: 'openrouter/auto',
         messages: [
           {
@@ -122,21 +149,21 @@ Analyze the business viability and market opportunity for a bagasse-to-graphene 
 PROJECT PARAMETERS:
 - Daily Capacity: ${inputs.dailyCapacity} tons/day of bagasse
 - Input Moisture: ${inputs.inputMoisture}%
-- GO Price: $${inputs.goPrice}/kg
+- GO Price: ${this.formatInr(inputs.goPrice)}/kg (India benchmark)
 - Region Selected: ${inputs.selectedRegion}
-- Electricity Cost: ₹${inputs.electricityCost}/kWh
-- Labor Cost: ₹${inputs.laborCost}/month
+- Electricity Cost: ${this.formatInr(inputs.electricityCost, 2)}/kWh
+- Labor Cost: ${this.formatInr(inputs.laborCost)}/day
 
 REGIONAL DATA:
 ${Object.entries(regionalData).map(([key, region]) => 
-  `${region.state}: ₹${region.electricityCost}/kWh electricity, ${region.bagasseAvailability}M tons/year feedstock, Incentives: ${region.majorIncentives.join(', ')}`
+  `${region.state}: ${this.formatInr(region.electricityCost, 2)}/kWh electricity, ${(Number(region.bagasseAvailability) / 1_000_000).toFixed(1)}M tons/year feedstock, Incentives: ${region.majorIncentives.join(', ')}`
 ).join('\n')}
 
 MARKET CONTEXT:
-- Global GO market: $100-250/kg (depends on purity)
-- India GO demand: Growing in batteries (35%), composites, water treatment
-- Bagasse availability: 40M tons/year in India, mostly wasted
-- Carbon credits: Worth ₹150-250/ton CO2 saved in India
+- India GO market benchmark: ₹8,000-₹22,000/kg (depends on purity and specs)
+- India GO demand: Growing in batteries, composites, water treatment, coatings
+- Bagasse availability: ~40M tons/year in India, large underutilized share
+- Carbon credits in India: typically ₹150-₹300/ton CO2 saved (varies by program)
 
 Questions to address:
 1. What are the realistic market dynamics for this venture?
@@ -156,20 +183,20 @@ Generate a professional feasibility report for investment decision-making. The v
 PROJECT DETAILS:
 - Daily Capacity: ${inputs.dailyCapacity} tons/day
 - GO Production: ${results.goProducedYearly?.toLocaleString()} kg/year
-- Yearly Revenue: $${results.yearlyRevenue?.toLocaleString()}
-- Yearly Profit: $${results.yearlyProfit?.toLocaleString()}
+- Yearly Revenue: ${this.formatInr(results.yearlyRevenue)}
+- Yearly Profit: ${this.formatInr(results.yearlyProfit)}
 - ROI: ${results.roiPercent?.toFixed(1)}%
 - Payback Period: ${results.paybackYears?.toFixed(1)} years
 
 FINANCIAL ASSUMPTIONS:
-- GO Selling Price: $${inputs.goPrice}/kg
-- Electricity Cost: ₹${inputs.electricityCost}/kWh
-- Labor Cost: ₹${inputs.laborCost}/month
-- Carbon Credit Value: $${inputs.carbonCreditValue}/ton CO2
+- GO Selling Price: ${this.formatInr(inputs.goPrice)}/kg
+- Electricity Cost: ${this.formatInr(inputs.electricityCost, 2)}/kWh
+- Labor Cost: ${this.formatInr(inputs.laborCost)}/day
+- Carbon Credit Value: ${this.formatInr(inputs.carbonCreditValue)}/ton CO2
 
 CARBON BENEFITS:
 - CO2 Saved Yearly: ${results.carbonSaved?.toLocaleString()} tons
-- Carbon Credit Revenue: $${results.yearlyFarbonCreditRevenue?.toLocaleString()}/year
+- Carbon Credit Revenue: ${this.formatInr(results.yearlyFarbonCreditRevenue)}/year
 
 Provide a structured report with:
 1. Executive Summary
@@ -192,14 +219,14 @@ Based on the latest market intelligence, provide an investment recommendation fo
 PROJECT SCORECARD:
 - ROI: ${results.roiPercent?.toFixed(1)}%
 - Payback: ${results.paybackYears?.toFixed(1)} years
-- Break-even GO price: $${results.breakEvenGoPrice?.toFixed(2)}/kg
-- Yearly Profit: $${results.yearlyProfit?.toLocaleString()}
+- Break-even GO price: ${this.formatInr(results.breakEvenGoPrice, 2)}/kg
+- Yearly Profit: ${this.formatInr(results.yearlyProfit)}
 
 REAL-TIME MARKET DATA:
 ${scraperData ? `
-- Current GO Market Price Range: $${scraperData.goPriceMin}-${scraperData.goPriceMax}/kg
-- Industry Electricity Rate Average: ₹${scraperData.avgElectricityCost}/kWh
-- Latest Carbon Credit Rate: ₹${scraperData.carbonCreditRate}/ton CO2
+- Current GO Market Price Range: ${this.formatInr(scraperData.goPriceMin)}-${this.formatInr(scraperData.goPriceMax)}/kg
+- Industry Electricity Rate Average: ${this.formatInr(scraperData.avgElectricityCost, 2)}/kWh
+- Latest Carbon Credit Rate: ${this.formatInr(scraperData.carbonCreditRate)}/ton CO2
 - Key Competitors: ${scraperData.competitors?.join(', ')}
 - Recent Policy Changes: ${scraperData.recentPolicies?.join(', ')}
 ` : 'Market data pending...'}

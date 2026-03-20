@@ -1,6 +1,8 @@
 import type { SimulationResults } from "@/lib/simulation";
 import { Brain, CheckCircle2, AlertTriangle, XCircle, Lightbulb } from "lucide-react";
 import SectionReveal from "@/components/SectionReveal";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Props {
   results: SimulationResults;
@@ -41,7 +43,57 @@ const AIRecommendation = ({ results, liveRecommendation = null, isLiveLoading = 
             </div>
             <div className="flex items-start gap-4">
               <Icon className={`mt-1 h-8 w-8 flex-shrink-0 ${config.color}`} />
-              <p className="text-lg text-foreground leading-relaxed whitespace-pre-line">{recommendationText}</p>
+              <div className="min-w-0 flex-1">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ node, ...props }) => (
+                      <h1 className="text-2xl font-bold text-foreground mb-4 mt-6 first:mt-0" {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <h2 className="text-xl font-semibold text-foreground mb-3 mt-5" {...props} />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h3 className="text-lg font-semibold text-foreground mb-2 mt-4" {...props} />
+                    ),
+                    p: ({ node, ...props }) => (
+                      <p className="text-base text-foreground leading-relaxed mb-3" {...props} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong className="font-semibold text-primary" {...props} />
+                    ),
+                    em: ({ node, ...props }) => (
+                      <em className="italic text-accent" {...props} />
+                    ),
+                    ul: ({ node, ...props }) => (
+                      <ul className="list-disc list-inside space-y-2 ml-4 mb-3" {...props} />
+                    ),
+                    ol: ({ node, ...props }) => (
+                      <ol className="list-decimal list-inside space-y-2 ml-4 mb-3" {...props} />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li className="text-base text-foreground" {...props} />
+                    ),
+                    blockquote: ({ node, ...props }) => (
+                      <blockquote
+                        className="border-l-4 border-primary/30 pl-4 italic text-muted-foreground my-4"
+                        {...props}
+                      />
+                    ),
+                    code: ({ node, inline, ...props }) =>
+                      inline ? (
+                        <code className="bg-white/10 px-2 py-0.5 rounded text-sm font-mono text-primary" {...props} />
+                      ) : (
+                        <code className="block bg-white/10 p-4 rounded-lg text-sm font-mono text-primary overflow-x-auto mb-3" {...props} />
+                      ),
+                    hr: ({ node, ...props }) => (
+                      <hr className="border-white/10 my-6" {...props} />
+                    ),
+                  }}
+                >
+                  {recommendationText}
+                </ReactMarkdown>
+              </div>
             </div>
             <div className="mt-4 text-xs text-muted-foreground">
               {isLiveLoading && "Refreshing AI recommendation from live market context..."}

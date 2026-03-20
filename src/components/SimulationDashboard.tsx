@@ -7,6 +7,8 @@ interface Props {
   results: SimulationResults;
 }
 
+const INR_PER_USD = 83;
+
 const SimulationDashboard = ({ results }: Props) => {
   const productionCards = [
     { label: "Dry Bagasse", value: `${results.dryBagasse.toFixed(2)} t/day`, icon: Flame, sub: "After moisture removal" },
@@ -49,7 +51,7 @@ const SimulationDashboard = ({ results }: Props) => {
             </div>
             <div>
               <div className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Energy cost</div>
-              <div className="mt-2 text-2xl font-semibold text-accent">${results.energyCostDaily.toFixed(0)}/day</div>
+              <div className="mt-2 text-2xl font-semibold text-accent">₹{(results.energyCostDaily * INR_PER_USD).toFixed(0)}/day</div>
             </div>
             <div>
               <div className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Carbon saved</div>

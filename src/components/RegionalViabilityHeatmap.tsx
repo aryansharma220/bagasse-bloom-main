@@ -5,6 +5,8 @@ import type { SimulationInputs } from "@/components/InputModule";
 import { runSimulation } from "@/lib/simulation";
 import type { SimulationResults } from "@/lib/simulation";
 
+const INR_PER_USD = 83;
+
 interface RegionalViabilityProps {
   inputs: SimulationInputs;
   baselineResults: SimulationResults;
@@ -137,11 +139,11 @@ export const RegionalViabilityHeatmap = ({ inputs, baselineResults }: RegionalVi
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-xs">
                   <div className="rounded-lg bg-black/20 px-2 py-2">
                     <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Electricity</p>
-                    <p className="mt-1 font-semibold text-foreground truncate">₹{(region.electricityCost * 75).toFixed(0)}/kWh</p>
+                    <p className="mt-1 font-semibold text-foreground truncate">₹{(region.electricityCost * INR_PER_USD).toFixed(2)}/kWh</p>
                   </div>
                   <div className="rounded-lg bg-black/20 px-2 py-2">
                     <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Annual Profit</p>
-                    <p className="mt-1 font-semibold text-primary truncate">${(region.yearlyProfit / 1000).toFixed(0)}K</p>
+                    <p className="mt-1 font-semibold text-primary truncate">₹{((region.yearlyProfit * INR_PER_USD) / 100000).toFixed(1)}L</p>
                   </div>
                   <div className="col-span-2 sm:col-span-1 rounded-lg bg-black/20 px-2 py-2">
                     <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Payback</p>

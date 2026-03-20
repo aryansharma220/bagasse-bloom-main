@@ -76,7 +76,7 @@ const HeroSection = () => {
               {[
                 { label: "Daily bagasse feed", value: "10 tons", tone: "bg-primary/18" },
                 { label: "Estimated GO output", value: "247.5 kg", tone: "bg-accent/18" },
-                { label: "Projected annual revenue", value: "$13.5M", tone: "bg-white/10" },
+                { label: "Projected annual revenue", value: "₹11.2 Cr", tone: "bg-white/10" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 transition-all duration-300 hover:bg-white/[0.07]">
                   <div className="flex items-center gap-3">

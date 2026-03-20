@@ -111,6 +111,8 @@ src/
 
 The current model is intended for comparative scenario analysis rather than laboratory or commercial certification. Core outputs are based on fixed assumptions for drying, pyrolysis yield, oxidation yield, energy use, and chemical cost.
 
+The UI presents financial values in INR for India-market analysis.
+
 Before using the results for investment or engineering decisions, validate the assumptions against:
 
 - feedstock quality data

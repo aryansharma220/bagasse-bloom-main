@@ -5,6 +5,8 @@ interface RiskSensitivityAnalysisProps {
   results: SimulationResults;
 }
 
+const INR_PER_USD = 83;
+
 export const RiskSensitivityAnalysis = ({ results }: RiskSensitivityAnalysisProps) => {
   const goPrice_downImpact = results.sensitivityFactors.goPrice.down20 - results.roiPercent;
   const goPrice_upImpact = results.sensitivityFactors.goPrice.up20 - results.roiPercent;
@@ -28,16 +30,16 @@ export const RiskSensitivityAnalysis = ({ results }: RiskSensitivityAnalysisProp
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Min GO Price</p>
-            <p className="mt-3 text-2xl font-bold text-primary">${results.breakEvenGoPrice.toFixed(0)}/kg</p>
+            <p className="mt-3 text-2xl font-bold text-primary">₹{(results.breakEvenGoPrice * INR_PER_USD).toFixed(0)}/kg</p>
             <p className="mt-2 text-xs text-muted-foreground">
               Plant breaks even at this price<br/>
-              (Current: ${results.priceNarginPercentage > 0 ? "Above" : "Below"} breakeven)
+              {`(Current: ${results.priceNarginPercentage > 0 ? "Above" : "Below"} breakeven)`}
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Carbon Credits Impact</p>
-            <p className="mt-3 text-2xl font-bold text-green-400">${results.yearlyFarbonCreditRevenue.toFixed(0)}/yr</p>
+            <p className="mt-3 text-2xl font-bold text-green-400">₹{(results.yearlyFarbonCreditRevenue * INR_PER_USD).toFixed(0)}/yr</p>
             <p className="mt-2 text-xs text-muted-foreground">
               Adds {((results.yearlyFarbonCreditRevenue / (results.yearlyRevenue + results.yearlyFarbonCreditRevenue)) * 100).toFixed(1)}% to total revenue
             </p>
