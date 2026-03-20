@@ -7,6 +7,10 @@ export class OpenRouterService {
     this.baseUrl = OPENROUTER_BASE_URL;
   }
 
+  getModel() {
+    return process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+  }
+
   getApiKey() {
     return process.env.OPENROUTER_API_KEY;
   }
@@ -48,7 +52,7 @@ export class OpenRouterService {
       const client = this.getClient();
       
       const response = await client.post('/chat/completions', {
-        model: 'openrouter/auto', // Uses best available model
+        model: this.getModel(),
         messages: [
           {
             role: 'system',
@@ -83,7 +87,7 @@ export class OpenRouterService {
       const client = this.getClient();
       
       const response = await client.post('/chat/completions', {
-        model: 'openrouter/auto',
+        model: this.getModel(),
         messages: [
           {
             role: 'system',
@@ -117,7 +121,7 @@ export class OpenRouterService {
       const client = this.getClient();
       
       const response = await client.post('/chat/completions', {
-        model: 'openrouter/auto',
+        model: this.getModel(),
         messages: [
           {
             role: 'system',

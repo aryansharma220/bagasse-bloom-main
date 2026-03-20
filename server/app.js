@@ -7,10 +7,12 @@ import dataRoutes from './api/routes/data.js';
 
 dotenv.config();
 
-const corsOrigin = process.env.CORS_ORIGIN;
+const normalizeOrigin = (origin) => String(origin || '').trim().replace(/\/+$/, '');
+
+const corsOrigin = normalizeOrigin(process.env.CORS_ORIGIN);
 const corsOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
-  .map((origin) => origin.trim())
+  .map((origin) => normalizeOrigin(origin))
   .filter(Boolean);
 
 if (corsOrigin && !corsOrigins.includes(corsOrigin)) {
@@ -18,10 +20,10 @@ if (corsOrigin && !corsOrigins.includes(corsOrigin)) {
 }
 
 const devOrigins = new Set([
-  'http://localhost:8080',
-  'http://localhost:5173',
-  'http://127.0.0.1:8080',
-  'http://127.0.0.1:5173',
+  normalizeOrigin('http://localhost:8080'),
+  normalizeOrigin('http://localhost:5173'),
+  normalizeOrigin('http://127.0.0.1:8080'),
+  normalizeOrigin('http://127.0.0.1:5173'),
 ]);
 
 const allowedOrigins = new Set([...corsOrigins, ...devOrigins]);
@@ -32,11 +34,12 @@ app.use(
   cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.has(origin)) {
+      const normalizedRequestOrigin = normalizeOrigin(origin);
+      if (allowedOrigins.has(normalizedRequestOrigin)) {
         return callback(null, true);
       }
 
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      return callback(new Error(`CORS blocked for origin: ${normalizedRequestOrigin}`));
     },
     credentials: true,
   })

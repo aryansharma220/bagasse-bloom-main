@@ -13,7 +13,7 @@ export class ScraperService {
   }
 
   getMarketModel() {
-    return process.env.OPENROUTER_MARKET_MODEL || 'perplexity/sonar';
+    return process.env.OPENROUTER_MARKET_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
   }
 
   getCacheTtlMinutes() {
@@ -79,41 +79,98 @@ Required JSON shape:
   "confidence": number
 }`;
 
-    const response = await axios.post(
-      OPENROUTER_BASE_URL,
-      {
-        model: this.getMarketModel(),
-        temperature: 0.1,
-        max_tokens: 1800,
-        messages: [
-          {
-            role: 'system',
-            content: 'Return strict JSON only. Do not wrap with markdown fences.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
+    try {
+      const response = await axios.post(
+        OPENROUTER_BASE_URL,
+        {
+          model: this.getMarketModel(),
+          temperature: 0.1,
+          max_tokens: 1800,
+          messages: [
+            {
+              role: 'system',
+              content: 'Return strict JSON only. Do not wrap with markdown fences.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
         },
-        timeout: 30000,
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      );
+
+      const content = response?.data?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('OpenRouter returned empty market intelligence payload');
       }
-    );
 
-    const content = response?.data?.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error('OpenRouter returned empty market intelligence payload');
+      const parsed = this.parseJson(content);
+      const normalized = this.normalizeIntelligence(parsed, response?.data?.model);
+      this.setCached(cacheKey, normalized);
+      return normalized;
+    } catch (error) {
+      const statusCode = error?.response?.status;
+      if (statusCode === 402 || statusCode === 404 || statusCode === 429) {
+        const fallback = this.getFallbackMarketIntelligence();
+        this.setCached(cacheKey, fallback);
+        return fallback;
+      }
+
+      throw error;
     }
+  }
 
-    const parsed = this.parseJson(content);
-    const normalized = this.normalizeIntelligence(parsed, response?.data?.model);
-    this.setCached(cacheKey, normalized);
-    return normalized;
+  getFallbackMarketIntelligence() {
+    return {
+      generatedAt: new Date().toISOString(),
+      grapheneOxide: {
+        priceUsdPerKg: { min: 90, max: 160, avg: 125 },
+        notableSuppliers: ['Indicative benchmark mode'],
+        recentSignals: ['Live provider unavailable, using cached benchmark assumptions'],
+      },
+      electricityIndiaIndustrialInrPerKwh: {
+        TamilNadu: 7.8,
+        Karnataka: 7.4,
+        Maharashtra: 8.1,
+        UttarPradesh: 6.9,
+        Gujarat: 6.6,
+        Rajasthan: 7.1,
+        AndhraPradesh: 7.2,
+        Punjab: 7.5,
+      },
+      carbonCredits: {
+        usdPerTonCo2: { min: 2.0, max: 4.0, avg: 2.8 },
+        inrPerTonCo2: { min: 166, max: 332, avg: 232 },
+        marketNotes: ['Fallback data due to live market feed unavailability'],
+      },
+      bagasseIndia: {
+        availabilityMillionTonsPerYear: 40,
+        pricingInrPerTon: { min: 1200, max: 2600, avg: 1900 },
+        majorSupplyRegions: ['Uttar Pradesh', 'Maharashtra', 'Karnataka', 'Tamil Nadu'],
+      },
+      incentives: {
+        central: ['MSME support schemes', 'State industrial incentives'],
+        state: ['Power tariff incentives', 'Green manufacturing support'],
+      },
+      marketNews: [
+        {
+          title: 'Fallback market mode active',
+          source: 'system',
+          date: new Date().toISOString().slice(0, 10),
+          relevance: 'low',
+        },
+      ],
+      sources: ['internal-fallback-benchmarks'],
+      confidence: 0.45,
+      model: 'fallback',
+    };
   }
 
   /**
@@ -298,7 +355,7 @@ Required JSON shape:
       marketNews: Array.isArray(raw?.marketNews) ? raw.marketNews : [],
       sources: Array.isArray(raw?.sources) ? raw.sources : [],
       confidence: Number(raw?.confidence || 0),
-      model: modelName || OPENROUTER_MARKET_MODEL,
+      model: modelName || this.getMarketModel(),
     };
   }
 
