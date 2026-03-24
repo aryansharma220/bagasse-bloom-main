@@ -8,7 +8,8 @@ export class OpenRouterService {
   }
 
   getModel() {
-    return process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+    console.log("MODEL:", process.env.OPENROUTER_MODEL);
+    return process.env.OPENROUTER_MODEL ||  "meta-llama/llama-3.1-8b-instruct:free";
   }
 
   getApiKey() {
@@ -130,7 +131,7 @@ export class OpenRouterService {
   /**
    * Get AI-powered investment recommendation
    */
-  async getInvestmentRecommendation(inputs, results, regionalData, scraperData) {
+  async getInvestmentRecommendation(inputs, results, regionalData, scraperData,) {
     try {
       const prompt = this.buildRecommendationPrompt(inputs, results, regionalData, scraperData);
       const client = this.getClient();
@@ -147,7 +148,7 @@ export class OpenRouterService {
             content: prompt,
           },
         ],
-        temperature: 0.6,
+        temperature: 0.9,
         max_tokens: 800,
       });
 

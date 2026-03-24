@@ -71,6 +71,10 @@ router.post('/generate-report', async (req, res) => {
  */
 router.post('/investment-recommendation', async (req, res) => {
   try {
+
+     /*console.log("REQ BODY:", req.body);
+   console.log("QUESTION RECEIVED:", req.body.question);*/
+
     const { inputs, results, regionalData, scraperData } = req.body;
 
     if (!inputs || !results) {
@@ -96,7 +100,8 @@ router.post('/investment-recommendation', async (req, res) => {
       inputs,
       results,
       regionalData || indianRegionalData,
-      marketData
+      marketData,
+      question
     );
 
     res.json({
@@ -109,6 +114,124 @@ router.post('/investment-recommendation', async (req, res) => {
     res.status(500).json({
       error: error.message || 'Recommendation failed',
       timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/* Ai assistant*/
+
+import axios from "axios";
+
+router.post('/chat', async (req, res) => {
+  try {
+    console.log("CHAT ROUTE HIT");
+
+    const { message, inputs, results } = req.body;
+
+    const prompt = `
+You are a smart AI assistant.
+
+User Question:
+${message}
+
+Project Inputs:
+${JSON.stringify(inputs)}
+
+Simulation Results:
+${JSON.stringify(results)}
+
+Answer clearly and differently each time.
+`;
+
+    const response = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: "openai/gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.9,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:8080",
+          "X-Title": "BioGraphX",
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      reply: response.data.choices[0].message.content,
+    });
+
+  } catch (error) {
+    console.error("CHAT ERROR FULL:", error.response?.data || error.message);
+
+    res.status(500).json({
+      error: "Chat failed",
+    });
+  }
+});
+
+router.post('/chat', async (req, res) => {
+  try {
+    console.log("CHAT ROUTE HIT");
+
+    const { message, inputs, results } = req.body;
+
+    const prompt = `
+You are a smart AI assistant.
+
+User Question:
+${message}
+
+Project Inputs:
+${JSON.stringify(inputs)}
+
+Simulation Results:
+${JSON.stringify(results)}
+
+Answer clearly and differently each time.
+`;
+
+    const response = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: "openai/gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.9,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:8080",
+          "X-Title": "BioGraphX",
+        },
+      }
+    );
+
+    res.json({
+      success: true,
+      reply: response.data.choices[0].message.content,
+    });
+
+  } catch (error) {
+    console.error("CHAT ERROR FULL:", error.response?.data || error.message);
+
+    res.status(500).json({
+      error: "Chat failed",
     });
   }
 });
