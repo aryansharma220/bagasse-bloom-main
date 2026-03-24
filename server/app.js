@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import aiRoutes from './api/routes/ai.js';
 import dataRoutes from './api/routes/data.js';
 
+
+
 dotenv.config();
 
 const normalizeOrigin = (origin) => String(origin || '').trim().replace(/\/+$/, '');
