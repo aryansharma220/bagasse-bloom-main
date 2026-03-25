@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+/*import { useState } from "react";
 
 type ChatMessage = {
   role: "user" | "bot";
@@ -86,7 +86,7 @@ export default function Chatbot({ inputs, results }: Props) {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button 
       <button
         onClick={() => setOpen(!open)}
         className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg z-[9999]"
@@ -97,7 +97,7 @@ export default function Chatbot({ inputs, results }: Props) {
         {open && (
   <div className="fixed bottom-16 right-4 w-[90%] sm:w-80 max-h-[70vh] bg-gray-900 text-white rounded-xl shadow-xl flex flex-col z-[9999]">
 
-    {/* Header */}
+    {/* Header 
     <div className="p-3 border-b border-gray-700 font-semibold flex justify-between items-center">
       <span>AI Assistant</span>
 
@@ -109,7 +109,7 @@ export default function Chatbot({ inputs, results }: Props) {
       </button>
     </div>
 
-    {/* Suggestions */}
+    {/* Suggestions 
     <div className="p-2 flex flex-wrap gap-2">
       {[
         "Is this profitable?",
@@ -127,7 +127,7 @@ export default function Chatbot({ inputs, results }: Props) {
       ))}
     </div>
 
-    {/* Messages */}
+    {/* Messages 
     <div className="flex-1 p-3 overflow-y-auto space-y-2">
       {chat.map((msg, i) => (
         <div
@@ -149,7 +149,7 @@ export default function Chatbot({ inputs, results }: Props) {
       )}
     </div>
 
-    {/* Input */}
+    {/* Input 
     <div className="p-2 border-t border-gray-700 flex gap-2">
       <input
         value={message}
@@ -172,4 +172,4 @@ export default function Chatbot({ inputs, results }: Props) {
        )}
     </>
   );
-}
+}*/

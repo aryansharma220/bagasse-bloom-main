@@ -8,7 +8,7 @@ import { runSimulation, type SimulationResults } from "@/lib/simulation";
 import { createSavedScenario, getSavedScenarios, persistSavedScenarios, type SavedScenario } from "@/lib/scenario-storage";
 import { aiService, dataService } from "@/lib/api-client";
 import type { AllMarketData, ApiResponse, InvestmentRecommendationData } from "@/lib/api-types";
-import Chatbot from "../components/chatbot";
+//import Chatbot from "../components/chatbot";
 
 
 
@@ -196,7 +196,7 @@ const Index = () => {
       )}
       <Footer />
 
-       <Chatbot inputs={inputs} results={results} />
+       {/*<Chatbot inputs={inputs} results={results} />*/}
     </div>
   );
 };
