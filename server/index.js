@@ -26,3 +26,4 @@ server.on('error', async (error) => {
   console.error(`Port ${PORT} is in use by another process. Stop it or change PORT in .env.`);
   process.exit(1);
 });
+
