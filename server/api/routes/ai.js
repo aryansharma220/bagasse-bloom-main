@@ -121,9 +121,9 @@ import axios from "axios";
 
 router.post('/chat', async (req, res) => {
   try {
-    //console.log("CHAT ROUTE HIT");
+    /*console.log("CHAT ROUTE HIT");
     console.log("API KEY:",process.env.OPENROUTER_API_KEY ? "FOUND" : "MISSING"),
-      console.log("MODEL:",process.env.OPENROUTER_MODEL)
+      console.log("MODEL:",process.env.OPENROUTER_MODEL)*/
 
     const { message, inputs, results } = req.body;
 
