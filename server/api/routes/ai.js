@@ -115,7 +115,7 @@ router.post('/investment-recommendation', async (req, res) => {
   }
 });
 
-/* Ai assistant*
+ /*Ai assistant*/
 
 import axios from "axios";
 
@@ -176,7 +176,7 @@ Answer clearly and differently each time.
   }
 });
 
-router.post('/chat', async (req, res) => {
+/*router.post('/chat', async (req, res) => {
   try {
     console.log("CHAT ROUTE HIT");
 
