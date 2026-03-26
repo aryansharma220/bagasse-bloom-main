@@ -20,8 +20,16 @@ export default function Chatbot({ inputs, results }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ✅ 🔥 IMPORTANT FIX (Dynamic API URL)
+  const API_URL =
+    window.location.hostname === "localhost"
+      ? "http://localhost:3001"
+      : "";
+
   const sendMessage = async () => {
     if (!message.trim()) return;
+
+    console.log("SENDING MESSAGE...");
 
     const newChat = [...chat, { role: "user", text: message }];
     setChat(newChat);
@@ -29,7 +37,7 @@ export default function Chatbot({ inputs, results }: Props) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/api/ai/chat", {
+      const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,6 +55,8 @@ export default function Chatbot({ inputs, results }: Props) {
         },
       ]);
     } catch (error) {
+      console.error("FRONTEND ERROR:", error);
+
       setChat([
         ...newChat,
         {
@@ -95,10 +105,7 @@ export default function Chatbot({ inputs, results }: Props) {
           {/* Header */}
           <div className="p-3 bg-gradient-to-r from-[#6EE7D8] to-[#3ECFBE] text-black font-semibold flex justify-between items-center">
             <span>AI Assistant</span>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-black text-lg"
-            >
+            <button onClick={() => setOpen(false)} className="text-black text-lg">
               ✖
             </button>
           </div>
@@ -152,7 +159,6 @@ export default function Chatbot({ inputs, results }: Props) {
               className="flex-1 p-2 rounded-xl bg-[#071418] text-white outline-none border border-[#3ECFBE]/30 focus:border-[#3ECFBE]"
             />
 
-            {/* Mic */}
             <button
               onClick={startVoice}
               className="bg-[#071418] border border-[#3ECFBE]/40 p-2 rounded-full hover:bg-[#0B1F24]"
@@ -160,7 +166,6 @@ export default function Chatbot({ inputs, results }: Props) {
               <Mic className="text-[#6EE7D8] w-5 h-5" />
             </button>
 
-            {/* Send */}
             <button
               onClick={sendMessage}
               className="bg-gradient-to-r from-[#6EE7D8] to-[#3ECFBE] p-2 rounded-xl hover:scale-105 transition"
