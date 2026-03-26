@@ -196,7 +196,7 @@ const Index = () => {
       )}
       <Footer />
 
-       <Chatbot inputs={inputs} results={results} />
+       {<Chatbot inputs={inputs} results={results} />}
     </div>
   );
 };

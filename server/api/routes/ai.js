@@ -72,9 +72,6 @@ router.post('/generate-report', async (req, res) => {
 router.post('/investment-recommendation', async (req, res) => {
   try {
 
-     /*console.log("REQ BODY:", req.body);
-   console.log("QUESTION RECEIVED:", req.body.question);*/
-
     const { inputs, results, regionalData, scraperData } = req.body;
 
     if (!inputs || !results) {
@@ -118,13 +115,13 @@ router.post('/investment-recommendation', async (req, res) => {
   }
 });
 
-/* Ai assistant*/
+ /*Ai assistant*/
 
 import axios from "axios";
 
 router.post('/chat', async (req, res) => {
   try {
-    console.log("CHAT ROUTE HIT");
+    //console.log("CHAT ROUTE HIT");
 
     const { message, inputs, results } = req.body;
 
@@ -179,7 +176,7 @@ Answer clearly and differently each time.
   }
 });
 
-router.post('/chat', async (req, res) => {
+/*router.post('/chat', async (req, res) => {
   try {
     console.log("CHAT ROUTE HIT");
 
@@ -234,6 +231,6 @@ Answer clearly and differently each time.
       error: "Chat failed",
     });
   }
-});
+});*/
 
 export default router;
