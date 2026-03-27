@@ -72,7 +72,7 @@ router.post('/generate-report', async (req, res) => {
 router.post('/investment-recommendation', async (req, res) => {
   try {
 
-    const { inputs, results, regionalData, scraperData } = req.body;
+    const { inputs, results, regionalData, scraperData} = req.body;
 
     if (!inputs || !results) {
       return res.status(400).json({ error: 'Missing inputs or results' });
@@ -98,7 +98,7 @@ router.post('/investment-recommendation', async (req, res) => {
       results,
       regionalData || indianRegionalData,
       marketData,
-      question
+     
     );
 
     res.json({
@@ -121,9 +121,9 @@ import axios from "axios";
 
 router.post('/chat', async (req, res) => {
   try {
-    /*console.log("CHAT ROUTE HIT");
+    console.log("CHAT ROUTE HIT");
     console.log("API KEY:",process.env.OPENROUTER_API_KEY ? "FOUND" : "MISSING"),
-      console.log("MODEL:",process.env.OPENROUTER_MODEL)*/
+      console.log("MODEL:",process.env.OPENROUTER_MODEL)
 
     const { message, inputs, results } = req.body;
 
