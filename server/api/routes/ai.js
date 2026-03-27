@@ -72,7 +72,7 @@ router.post('/generate-report', async (req, res) => {
 router.post('/investment-recommendation', async (req, res) => {
   try {
 
-    const { inputs, results, regionalData, scraperData } = req.body;
+    const { inputs, results, regionalData, scraperData} = req.body;
 
     if (!inputs || !results) {
       return res.status(400).json({ error: 'Missing inputs or results' });
@@ -98,7 +98,7 @@ router.post('/investment-recommendation', async (req, res) => {
       results,
       regionalData || indianRegionalData,
       marketData,
-      question
+     
     );
 
     res.json({
